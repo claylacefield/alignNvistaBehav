@@ -2,7 +2,7 @@ function [nvGpioStruc] = importNvistaGPIO(varargin)
 
 % Clay 111716
 % 
-if length(varargin)==0
+if nargin==0
 [filename, path] = uigetfile('*.*', 'Select nVista GPIO file (.csv or Gpio1.mat)');
 cd(path);
 else
@@ -14,10 +14,10 @@ if strfind(filename, '.csv')
 %     colNames = textscan(fid, '%s', 5, 'Delimiter', ',');
 %     data = textscan(fid, '%f %u8 %u8 %u8 %u8', 'Delimiter', ',');
 %     fclose(fid);
-data = readTable;
+data = readtable(filename);
     nvTimeSec = data{:,1};
-    gpio1bin = data{:,2};
-    syncBin = data{:,4};
+    gpio1bin = data{:,2};  % this is TTL out from behav onto nVist GPIO #1
+    syncBin = data{:,4};    % these are nVista frame triggers
     clear data;
 elseif strfind(filename, '.mat')
     gpio1 = load(filename);

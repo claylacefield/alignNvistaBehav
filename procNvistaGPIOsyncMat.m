@@ -5,7 +5,7 @@ function [nvGpSyncStruc] = procNvistaGPIOsyncMat(varargin)
 % then finds frame times (in ms) and event times on all GPIO ports.
 % Results are output as structure.
 
-if length(varargin)==0
+if nargin==0
 [filename, path] = uigetfile('*.*', 'Select nVista GPIO file (.csv or Gpio1.mat)');
 cd(path);
 else
@@ -40,6 +40,7 @@ nvBehavOutONind = find(diff(gpio1bin)==1)+1; % if nVista starts during first pul
 
 nvGpSyncStruc.nvTimeSec = nvTimeSec;
 nvGpSyncStruc.nvFrInd = nvFrInd;
+nvGpSyncStruc.nvFrTimes = nvTimeSec(nvFrInd);
 nvGpSyncStruc.nvBehavOutOFFind = nvBehavOutOFFind;
 nvGpSyncStruc.nvBehavOutONind = nvBehavOutONind;
 % nvGpStruc.gp2evTimes = gp2evTimes;

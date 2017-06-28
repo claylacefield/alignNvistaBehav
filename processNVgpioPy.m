@@ -36,11 +36,11 @@ dataTable = readtable([path filename]); % read in data as a table (index like ce
 
 disp('Processing signals'); %tic;
 % read in event arrays
-frames = dataTable{:,1}; frames = frames - frames(1)+1;
-time = dataTable{:,2};
-sync = dataTable{:,3};
+frames = dataTable{:,1}; frames = frames - frames(1)+1; % frame number for each event
+time = dataTable{:,2};  % time for each event (of whatever type)
+sync = dataTable{:,3};  % frame trigger (0 to 1 for frame start, 1 to 0 for frame stop)
 
-io1 = dataTable{:,5};
+io1 = dataTable{:,5};   % similarly for GPIO#1/TTL behav sync signal
 io2 = dataTable{:,6};
 
 % NOTE: events are represented in a weird way in the nvista file-
@@ -81,12 +81,13 @@ toc;
 
 %% put stuff into output structure
 nvGpSyncStruc.filename = filename;
-nvGpSyncStruc.nvTimeSec = 0:0.001:time(end);
-nvGpSyncStruc.frTimes = frTimes;
+nvTimeSec = 0:0.001:time(end);
+nvGpSyncStruc.nvTimeSec = nvTimeSec';
+nvGpSyncStruc.nvFrTimes = frTimes;
 
 nvGpSyncStruc.syncOnTimes = syncOnTimes;
 nvGpSyncStruc.syncOffTimes = syncOffTimes;
-nvGpSyncStruc.syncOnNvFrames = syncOnFrames;
+nvGpSyncStruc.syncOnNvFrames = syncOnFrames; % frame number for each TTL event
 nvGpSyncStruc.syncOffNvFrames = syncOffFrames;
 
 try

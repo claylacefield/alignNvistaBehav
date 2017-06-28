@@ -39,17 +39,23 @@ disp(['Processing nVista signals for ' filename]); tic;
 
 if strfind(ext,'.txt')
     [nvGpSyncStruc] = processNVgpioPy(filename);
-elseif strfind(ext,'.mat') || strfind(ext,'.csv')
-    [nvGpSyncStruc] = procNvistaGPIOsyncMat();
+    nvFrTimes = nvGpSyncStruc.nvFrTimes;
+    nvBehavOutOFFtimes = nvGpSyncStruc.syncOffTimes;
+    nvBehavOutONtimes = nvGpSyncStruc.syncOnTimes;
+    
+    
+elseif ~isempty(strfind(ext,'.mat')) || ~isempty(strfind(ext,'.csv'))
+    [nvGpSyncStruc] = procNvistaGPIOsyncMat(filename);
+    nvFrInd = nvGpSyncStruc.nvFrInd;
+    nvBehavOutOFFind = nvGpSyncStruc.nvBehavOutOFFind;
+    nvBehavOutONind = nvGpSyncStruc.nvBehavOutONind;  % NOTE: this will leave out beginning of first pulse from Behav
+    %nvDelay = nvGpSyncStruc.nvDelay;
 end
 
 
 behavNvSyncStruc.nvFilename = nvGpSyncStruc.filename;
 nvTimeSec = nvGpSyncStruc.nvTimeSec;
-nvFrInd = nvGpSyncStruc.nvFrInd;
-nvBehavOutOFFind = nvGpSyncStruc.nvBehavOutOFFind;
-nvBehavOutONind = nvGpSyncStruc.nvBehavOutONind;  % NOTE: this will leave out beginning of first pulse from Behav
-%nvDelay = nvGpSyncStruc.nvDelay;
+
 toc;
 
 %% 2.) load and process behavior system data
@@ -60,13 +66,15 @@ behavNvSyncStruc.behavFilename = filename;
 cd path;
 
 if strfind(ext,'.txt')
+    system = 'medAssoc';
     [behavStruc] = procBehavMedAssoc(filename);
-    
-    
+    ethoTime = behavStruc.behavTimeSec;
+    ethoOutOFFtime = behavStruc.ttlOutOffTimes;
 elseif strfind(ext,'.mat') || strfind(ext,'.csv')
+    system = 'ethovision';
     [ethoTimeStruc] = importEthoXL(filename);
-    ethoTime = ethoTimeStruc.ethoTime;
-    ethoOutONind = ethoTimeStruc.ethoOutONind;
+    ethoTime = ethoTimeStruc.ethoTime;  % ethovision time for each ethovision frame
+    ethoOutONind = ethoTimeStruc.ethoOutONind;  % index of each TTL onset
     
     ethoOutOFFind = ethoTimeStruc.ethoOutOFFind;
     nvEthoOutOFFtime = nvTimeSec(nvEthoOutOFFind);
@@ -76,6 +84,7 @@ elseif strfind(ext,'.mat') || strfind(ext,'.csv')
     
 end
 
+behavNvSyncStruc.behavSystem = system;
 
 %% 3.) align Etho with nVista
 disp('Aligning Ethovision frames with nVista'); tic;
