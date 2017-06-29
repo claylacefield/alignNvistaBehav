@@ -40,9 +40,9 @@ disp(['Processing nVista signals for ' filename]); tic;
 if strfind(ext,'.txt')
     [nvGpSyncStruc] = processNVgpioPy(filename);
     nvFrTimes = nvGpSyncStruc.nvFrTimes;
-    nvBehavOutOFFtimes = nvGpSyncStruc.syncOffTimes;
-    nvBehavOutONtimes = nvGpSyncStruc.syncOnTimes;
-    
+    nvBehavOutOFFtime = nvGpSyncStruc.syncOffTimes;
+    nvBehavOutONtime = nvGpSyncStruc.syncOnTimes;
+    nvTimeSec = nvGpSyncStruc.nvTimeSec;
     
 elseif ~isempty(strfind(ext,'.mat')) || ~isempty(strfind(ext,'.csv'))
     [nvGpSyncStruc] = procNvistaGPIOsyncMat(filename);
@@ -50,11 +50,14 @@ elseif ~isempty(strfind(ext,'.mat')) || ~isempty(strfind(ext,'.csv'))
     nvBehavOutOFFind = nvGpSyncStruc.nvBehavOutOFFind;
     nvBehavOutONind = nvGpSyncStruc.nvBehavOutONind;  % NOTE: this will leave out beginning of first pulse from Behav
     %nvDelay = nvGpSyncStruc.nvDelay;
+    nvTimeSec = nvGpSyncStruc.nvTimeSec;
+    nvEthoOutOFFtime = nvTimeSec(nvEthoOutOFFind);
+    nvFrTimes = nvTimeSec(nvFrInd);
 end
 
 
 behavNvSyncStruc.nvFilename = nvGpSyncStruc.filename;
-nvTimeSec = nvGpSyncStruc.nvTimeSec;
+
 
 toc;
 
@@ -63,24 +66,31 @@ toc;
 [noPath, behavBasename, ext] = fileparts(filename);
 disp('Processing behavior signals'); tic;
 behavNvSyncStruc.behavFilename = filename;
-cd path;
+cd(path);
 
 if strfind(ext,'.txt')
     system = 'medAssoc';
     [behavStruc] = procBehavMedAssoc(filename);
     ethoTime = behavStruc.behavTimeSec;
     ethoOutOFFtime = behavStruc.ttlOutOffTimes;
-elseif strfind(ext,'.mat') || strfind(ext,'.csv')
+elseif ~isempty(strfind(ext,'.xlsx'))
     system = 'ethovision';
     [ethoTimeStruc] = importEthoXL(filename);
     ethoTime = ethoTimeStruc.ethoTime;  % ethovision time for each ethovision frame
     ethoOutONind = ethoTimeStruc.ethoOutONind;  % index of each TTL onset
     
     ethoOutOFFind = ethoTimeStruc.ethoOutOFFind;
-    nvEthoOutOFFtime = nvTimeSec(nvEthoOutOFFind);
+    
+    % sometimes etho doesn't capture end of last sync TTL pulse but nVista
+    % does, so you have to cut this off
+    if length(ethoOutOFFind)<length(nvBehavOutOFFtime)
+        nvBehavOutOFFtime = nvBehavOutOFFtime(1:length(ethoOutOFFind));
+    end
+    
+    
     
     ethFrNvTime = zeros(length(ethoTime),1); % initialize etho time vector
-    ethFrNvTime(ethoOutOFFind) = nvEthoOutOFFtime; % assign frames at TTL OFF to nv times
+    ethFrNvTime(ethoOutOFFind) = nvBehavOutOFFtime; % assign frames at TTL OFF to nv times
     
 end
 
@@ -92,22 +102,22 @@ disp('Aligning Ethovision frames with nVista'); tic;
 % fill in frame times between TTL OFF events
 deo = diff(ethoOutOFFind); % number of frames between sync OFF pulses
 for i=1:length(ethoOutOFFind)-1
-    ethFrNvTime(ethoOutOFFind(i):ethoOutOFFind(i+1)) = linspace(nvEthoOutOFFtime(i),nvEthoOutOFFtime(i+1), deo(i)+1);
+    ethFrNvTime(ethoOutOFFind(i):ethoOutOFFind(i+1)) = linspace(nvBehavOutOFFtime(i),nvBehavOutOFFtime(i+1), deo(i)+1);
 end
 
 % now fill in first and last epochs based upon avg framerate
 avIFI = mean(diff(ethFrNvTime(ethoOutOFFind(1):ethoOutOFFind(end))));
 
-ethFrNvTime(ethoOutOFFind(1)-1:-1:1) = nvEthoOutOFFtime(1)-(avIFI*(1:(ethoOutOFFind(1)-1)));
+ethFrNvTime(ethoOutOFFind(1)-1:-1:1) = nvBehavOutOFFtime(1)-(avIFI*(1:(ethoOutOFFind(1)-1)));
 %t = linspace(nvDelay/1000,nvEthoOutOFFtime(1), ethoOutOFFind(1));
-ethFrNvTime(ethoOutOFFind(end)+1:end) = nvEthoOutOFFtime(end)+(avIFI*(1:(length(ethoTime)-ethoOutOFFind(end))));
+ethFrNvTime(ethoOutOFFind(end)+1:end) = nvBehavOutOFFtime(end)+(avIFI*(1:(length(ethoTime)-ethoOutOFFind(end))));
 
 behavNvSyncStruc.ethFrNvTime = ethFrNvTime; % save into output struc
 
 %% 4.) Calc. nearest frames of nV/Etho to the other
 
-[nrstNvFrToEthoInd, dist] = nearestpoint(ethFrNvTime,nvTimeSec(nvFrInd), 'nearest');
-[nrstEthoFrToNvInd, dist] = nearestpoint(nvTimeSec(nvFrInd),ethFrNvTime, 'nearest');
+[nrstNvFrToEthoInd, dist] = nearestpoint(ethFrNvTime,nvFrTimes, 'nearest');
+[nrstEthoFrToNvInd, dist] = nearestpoint(nvFrTimes,ethFrNvTime, 'nearest');
 
 behavNvSyncStruc.nrstNvFrToEthoInd = nrstNvFrToEthoInd;
 behavNvSyncStruc.nrstEthoFrToNvInd = nrstEthoFrToNvInd;
@@ -118,7 +128,7 @@ behavNvSyncStruc.nvGpSyncStruc = nvGpSyncStruc;
 behavNvSyncStruc.ethoTimeStruc = ethoTimeStruc;
 
 %% and save to file
-disp('Saving ethoNvAlignStruc'); tic;
-save(['ethoNvAlignStruc_' date], 'ethoNvAlignStruc');
+disp('Saving behavNvSyncStruc'); tic;
+save(['behavNvSyncStruc_' date], 'behavNvSyncStruc');
 toc;
 

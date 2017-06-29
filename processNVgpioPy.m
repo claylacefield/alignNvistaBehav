@@ -23,7 +23,7 @@ function [nvGpSyncStruc] = processNVgpioPy(varargin) % time, sync, io1) % (pyGpi
 % one used the CSV export from Mosaic. So they either process this frame
 % data differently or they regularize this when exporting.
 
-if length(varargin)==0
+if nargin==0
 [filename, path] = uigetfile('.txt', 'Select TXT file of Python exported nVista gpio');
 else
     filename = varargin{1};
@@ -39,7 +39,7 @@ disp('Processing signals'); %tic;
 frames = dataTable{:,1}; frames = frames - frames(1)+1; % frame number for each event
 time = dataTable{:,2};  % time for each event (of whatever type)
 sync = dataTable{:,3};  % frame trigger (0 to 1 for frame start, 1 to 0 for frame stop)
-
+trig = dataTable{:,4};  % session trigger (high from onset, stops a few events before the end)
 io1 = dataTable{:,5};   % similarly for GPIO#1/TTL behav sync signal
 io2 = dataTable{:,6};
 
@@ -47,6 +47,12 @@ io2 = dataTable{:,6};
 % Basically, anytime a signal changes (of whatever sort) the time (and
 % frame) of that event is logged with the change (e.g. 0 to 1, signal goes
 % on or off, or frame changes).
+% BUT: a few things remain unknown
+% 1.) sometimes sync/frameTrig goes low at end and doesn't have trigger,
+% even though there is a frame number listed, so I don't know whether this
+% frame is actually captured, and I'm not currently assigning it a time
+% 2.) the behav sync signal sometimes goes low at the end but I don't know
+% if this is because it really goes low, or nVista stops acquiring it
 
 t1 = time;%-time(1); % subtract first time to have adjusted time array (event based)
 frInds = find(diff(sync)==1)+1; % find indices of frame trigger pulses
