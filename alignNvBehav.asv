@@ -17,8 +17,6 @@ function [behavNvSyncStruc] = alignNvBehav()
 % (which calls) importNvistaGPIO.m (clay)
 % importEthoXL.m (clay)
 % nearestpoint.m (Mathworks Exchange)
-% and
-% processNVgpioPy.m (clay) for python exported nVista GPIO
 %
 % OUTPUT:
 % ethFrNvTime : vector of ethovision frame times with respect to nVista
