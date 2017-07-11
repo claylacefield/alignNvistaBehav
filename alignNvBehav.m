@@ -1,6 +1,6 @@
 function [behavNvSyncStruc] = alignNvBehav()
 
-%% USAGE: [ethoNvAlignStruc] = alignNvBehav();
+%% USAGE: [behavNvAlignStruc] = alignNvBehav();
 % Clay
 % Jan. 2017
 % This function uses a new method for aligning the Ethovision
