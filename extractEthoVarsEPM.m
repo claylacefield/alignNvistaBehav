@@ -1,4 +1,4 @@
-function [ethoStruc] = extractEthoVars()
+function [ethoStruc] = extractEthoVarsEPM()
 
 % Clay 2017
 % Reads in all relevant variables from an Ethovision XL file
