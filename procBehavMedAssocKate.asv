@@ -64,12 +64,9 @@ code = cell(numEvents,1);
 % Get time of events; MedPC-IV time resolution is 5ms
 origMedTime = zeros(numEvents,1);
 for evNum = 1:numEvents
-    try
     currCode = num2str(codes(evNum)); % extract current full code
     origMedTime(evNum) = str2double(currCode(1:end-4));    % and get time (in ms)
     code{evNum} = currCode(end-3:end);
-    catch
-    end
 end
 
 %Subtract out initial time such that first events occur at time=0
