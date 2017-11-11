@@ -1,11 +1,17 @@
-function [nvokeGpioStruc] = readNvokeCsv()
+function [nvokeGpioStruc] = readNvokeCsv(varargin);
 
 % Select and read in a meta_decode.py exported nVoke CSV file
 % (see email with description of exported data from Inscopix, at bottom)
 % Clay 2017
 
 %% read data
-filename = uigetfile('.csv');  % select CSV file
+
+if nargin == 1
+    filename = varargin{1};
+else
+    [filename, folder] = uigetfile('.csv', 'Select meta_decode.py exported nVoke .csv file');  % select CSV file
+    cd(folder);
+end
 
 dataTable = readtable(filename);    % read CSV as MATLAB table
 dataCell = table2cell(dataTable);   % now convert to cell array

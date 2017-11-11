@@ -66,8 +66,6 @@ if strcmp(system, 'nvista')
 elseif strcmp(system, 'nvoke')
     nvokeGpioStruc = readNvokeCsv(filename);
     nvFrTimes = nvokeGpioStruc.nvFrTimes;
-    nvBehavOutOFFtime = nvokeGpioStruc.syncOffTimes;
-    nvBehavOutONtime = nvokeGpioStruc.syncOnTimes;
 end
 
 
